@@ -13,7 +13,7 @@ namespace NeighBot
         public SemaphoreSlim Lock { get; }
         public IScenario CurrentScenario { get; set; }
 
-        public UserContext(User user, IScenario scenario)
+        public UserContext(User user, IScenario scenario = null)
         {
             User = user;
             Lock = new SemaphoreSlim(1, 1);

@@ -14,7 +14,7 @@ namespace NeighBot
 {
     public class BotService : IHostedService
     {
-        delegate ScenarioResult ActionHandler(UserContext context);
+        delegate Task<ScenarioResult> ActionHandler(UserContext context);
 
         readonly WebProxySettings _webProxySettings;
         readonly BotSettings _botSettings;
@@ -41,29 +41,29 @@ namespace NeighBot
 
             _botClient.OnMessage += OnMessage;
             _botClient.OnCallbackQuery += OnCallbackQuery;
+            _botClient.OnInlineResultChosen += OnInlineResultChosen;
         }
 
-        IScenario Init(User user)
+        async void OnMessage(object sender, MessageEventArgs args) =>
+            await OnAction(
+                args.Message.From,
+                args.Message.Chat,
+                async (context) => await context.CurrentScenario.OnMessage(_botClient, sender, args));
+
+        async void OnCallbackQuery(object sender, CallbackQueryEventArgs args) =>
+            await OnAction(
+                args.CallbackQuery.Message.From,
+                args.CallbackQuery.Message.Chat,
+                (context) => context.CurrentScenario.OnCallbackQuery(_botClient, sender, args));
+
+        async Task OnAction(User user, Chat chat, ActionHandler handler)
         {
-            var scenario = new InitScenario();
-            scenario.Init(_botClient, user);
-            return scenario;
-        }
-
-        void OnMessage(object sender, MessageEventArgs args) =>
-            OnAction(args.Message.From, (context) => context.CurrentScenario.OnMessage(_botClient, sender, args));
-
-        void OnCallbackQuery(object sender, CallbackQueryEventArgs args) =>
-            OnAction(args.CallbackQuery.From, (context) => context.CurrentScenario.OnCallbackQuery(_botClient, sender, args));
-
-        void OnAction(User user, ActionHandler handler)
-        {
-            var context = _userManager.GetContext(user, Init);
-            context.Lock.Wait();
+            var context = _userManager.GetContext(user);
+            await context.Lock.WaitAsync();
             try
             {
-                EnsureScenario(context, user);
-                var result = handler(context);
+                await EnsureScenario(context, user, chat);
+                var result = await handler(context);
                 PrecessResult(context, result);
             }
             finally
@@ -72,8 +72,14 @@ namespace NeighBot
             }
         }
 
-        void EnsureScenario(UserContext context, User user) =>
-            context.CurrentScenario ??= Init(user);
+        async Task EnsureScenario(UserContext context, User user, Chat chat = null)
+        {
+            if (context.CurrentScenario != null)
+                return;
+
+            context.CurrentScenario = new InitScenario();
+            await context.CurrentScenario.Init(_botClient, user, chat);
+        }
 
         void PrecessResult(UserContext context, ScenarioResult result)
         {

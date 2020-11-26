@@ -9,8 +9,6 @@ namespace NeighBot
 {
     public class UserManager
     {
-        public delegate IScenario InitScenarioFactory(User user);
-
         readonly static TimeSpan _expiration = TimeSpan.FromHours(1);
 
         readonly IMemoryCache _cahce;
@@ -23,11 +21,11 @@ namespace NeighBot
                 ? user.Id.ToString()
                 : $"{user.Username}[{user.Id}]";
 
-        public UserContext GetContext(User user, InitScenarioFactory initScenarioFactory) =>
+        public UserContext GetContext(User user) =>
             _cahce.GetOrCreate(GetKey(user), (entry) =>
             {
                 entry.SetSlidingExpiration(_expiration);
-                return new UserContext(user, initScenarioFactory(user));
+                return new UserContext(user);
             });
     }
 }
