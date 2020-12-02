@@ -10,6 +10,9 @@ namespace NeighBot
         public static ScenarioResult ContinueCurrent { get; } = new ScenarioResult(ScenarioAction.ContinueCurrent);
         public static ScenarioResult Done { get; } = new ScenarioResult(ScenarioAction.Done);
 
+        public static ScenarioResult NewScenario(IScenario scenario) =>
+            new ScenarioResult(ScenarioAction.NewScenario, scenario);
+
         public ScenarioAction Action { get; }
         public IScenario Scenario { get; }
 
