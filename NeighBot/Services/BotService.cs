@@ -41,28 +41,24 @@ namespace NeighBot
 
             _botClient.OnMessage += OnMessage;
             _botClient.OnCallbackQuery += OnCallbackQuery;
-            _botClient.OnInlineResultChosen += OnInlineResultChosen;
         }
 
         async void OnMessage(object sender, MessageEventArgs args) =>
-            await OnAction(
-                args.Message.From,
-                args.Message.Chat,
-                async (context) => await context.CurrentScenario.OnMessage(_botClient, sender, args));
+            await OnAction(args.Message.From, args.Message.Chat, null,
+                async (context) => await context.CurrentScenario.OnMessage(context.Trail, args));
 
         async void OnCallbackQuery(object sender, CallbackQueryEventArgs args) =>
-            await OnAction(
-                args.CallbackQuery.Message.From,
-                args.CallbackQuery.Message.Chat,
-                (context) => context.CurrentScenario.OnCallbackQuery(_botClient, sender, args));
+            await OnAction(args.CallbackQuery.From, args.CallbackQuery.Message.Chat, args.CallbackQuery.Data,
+                (context) => context.CurrentScenario.OnCallbackQuery(context.Trail, args));
 
-        async Task OnAction(User user, Chat chat, ActionHandler handler)
+        async Task OnAction(User user, Chat chat, string callbackData, ActionHandler handler)
         {
-            var context = _userManager.GetContext(user);
+            var context = _userManager.GetContext(_botClient, user, chat);
             await context.Lock.WaitAsync();
             try
             {
-                await EnsureScenario(context, user, chat);
+                context.Trail.CallbackData = callbackData;
+                await EnsureScenario(context);
                 var result = await handler(context);
                 PrecessResult(context, result);
             }
@@ -72,13 +68,13 @@ namespace NeighBot
             }
         }
 
-        async Task EnsureScenario(UserContext context, User user, Chat chat = null)
+        async Task EnsureScenario(UserContext context)
         {
             if (context.CurrentScenario != null)
                 return;
 
             context.CurrentScenario = new InitScenario();
-            await context.CurrentScenario.Init(_botClient, user, chat);
+            await context.CurrentScenario.Init(context.Trail);
         }
 
         void PrecessResult(UserContext context, ScenarioResult result)

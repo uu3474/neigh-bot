@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -33,7 +34,9 @@ namespace NeighBot
         string FormatProperty(string property) =>
             string.IsNullOrEmpty(property) ? "<пусто>" : property;
 
-        InlineKeyboardButton[] KeyboardForProperty(string property, string name, string addData, string editData, string removeData) =>
+        InlineKeyboardButton[] KeyboardForProperty(
+            string property, string name,
+            string addData, string editData, string removeData) =>
             string.IsNullOrEmpty(property)
                 ? new[] { InlineKeyboardButton.WithCallbackData($"Добавить {name}", addData) }
                 : new[]
@@ -42,7 +45,7 @@ namespace NeighBot
                     InlineKeyboardButton.WithCallbackData($"Удалить {name}", removeData)
                 };
 
-        async Task PrintProfileMenu(TelegramBotClient bot, User user, Chat chat = null)
+        async Task PrintProfileMenu(MessageTrail trail)
         {
             var text = new StringBuilder()
                 .AppendLine("Ваш профиль:")
@@ -63,15 +66,21 @@ namespace NeighBot
                 new [] { InlineKeyboardButton.WithCallbackData("Назад", BackAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await bot.SendTextMessageAsync(chat?.Id ?? user.Id, text, replyMarkup: markup);
+            await trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
-        public async Task<ScenarioResult> Init(TelegramBotClient bot, User user, Chat chat)
+        public async override Task<ScenarioResult> Init(MessageTrail trail)
         {
-            _profle = new Profile(user);
-            await PrintProfileMenu(bot, user, chat);
+            _profle = new Profile(trail.User);
+            await PrintProfileMenu(trail);
             return ScenarioResult.ContinueCurrent;
         }
 
+        public async override Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
+            args.CallbackQuery.Data switch
+            {
+                BackAction => await NewScenarioInit(trail, new InitScenario()),
+                _ => ScenarioResult.ContinueCurrent
+            };
     }
 }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace NeighBot
@@ -21,11 +22,11 @@ namespace NeighBot
                 ? user.Id.ToString()
                 : $"{user.Username}[{user.Id}]";
 
-        public UserContext GetContext(User user) =>
+        public UserContext GetContext(TelegramBotClient bot, User user, Chat chat = null) =>
             _cahce.GetOrCreate(GetKey(user), (entry) =>
             {
                 entry.SetSlidingExpiration(_expiration);
-                return new UserContext(user);
+                return new UserContext(bot, user, chat);
             });
     }
 }

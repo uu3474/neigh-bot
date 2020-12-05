@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -13,7 +14,7 @@ namespace NeighBot
     {
         const string BackAction = "Coupons.Back";
 
-        async Task PrintMenu(TelegramBotClient bot, User user, Chat chat = null)
+        async Task PrintMenu(MessageTrail trail)
         {
             var text = new StringBuilder()
                 .AppendLine("Вам доступны следующие награды:")
@@ -29,13 +30,20 @@ namespace NeighBot
 
             var keyboard = new[] { InlineKeyboardButton.WithCallbackData($"Назад", BackAction) };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await bot.SendTextMessageAsync(chat?.Id ?? user.Id, text, replyMarkup: markup);
+            await trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
-        public async Task<ScenarioResult> Init(TelegramBotClient bot, User user, Chat chat = null)
+        public override async Task<ScenarioResult> Init(MessageTrail trail)
         {
-            await PrintMenu(bot, user, chat);
+            await PrintMenu(trail);
             return ScenarioResult.ContinueCurrent;
         }
+
+        public override async Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
+            args.CallbackQuery.Data switch
+            {
+                BackAction => await NewScenarioInit(trail, new InitScenario()),
+                _ => ScenarioResult.ContinueCurrent
+            };
     }
 }

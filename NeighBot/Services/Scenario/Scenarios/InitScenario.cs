@@ -16,7 +16,7 @@ namespace NeighBot
         const string CouponswAction = "Init.Coupons";
         const string AddReviewAction = "Init.AddReview";
 
-        async Task PrintMenu(TelegramBotClient bot, User user, Chat chat = null)
+        async Task PrintMenu(MessageTrail trail)
         {
             var text = "Добро пожаловать в добрососедский бот, пожалуйста, выберите действие:";
             var keyboard = new[]
@@ -33,19 +33,21 @@ namespace NeighBot
                 }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await bot.SendTextMessageAsync(chat?.Id ?? user.Id, text, replyMarkup: markup);
+            await trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
-        public async Task<ScenarioResult> Init(TelegramBotClient bot, User user, Chat chat = null)
+        public override async Task<ScenarioResult> Init(MessageTrail trail)
         {
-            await PrintMenu(bot, user, chat);
+            await PrintMenu(trail);
             return ScenarioResult.ContinueCurrent;
         }
 
-        public async Task<ScenarioResult> OnCallbackQuery(TelegramBotClient bot, object sender, CallbackQueryEventArgs args) =>
+        public override async Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
             args.CallbackQuery.Data switch
             {
-                ProfileAction => await NewScenarioInit(bot, args, new ProfileScenario()),
+                ProfileAction => await NewScenarioInit(trail, new ProfileScenario()),
+                ReviewsAction => await NewScenarioInit(trail, new ReviewsScenario()),
+                CouponswAction => await NewScenarioInit(trail, new CouponsScenario()),
                 _ => ScenarioResult.ContinueCurrent
             };
     }
