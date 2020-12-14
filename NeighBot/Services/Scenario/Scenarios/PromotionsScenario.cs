@@ -10,7 +10,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NeighBot
 {
-    public class CouponsScenario : BaseScenario
+    public class PromotionsScenario : BaseScenario
     {
         const string BackAction = "Coupons.Back";
 

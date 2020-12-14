@@ -11,29 +11,24 @@ namespace NeighBot
 {
     public class InitScenario : BaseScenario
     {
-        const string ProfileAction = "Init.Profile";
-        const string ReviewsAction = "Init.Reviews";
-        const string CouponswAction = "Init.Coupons";
         const string AddReviewAction = "Init.AddReview";
-
+        const string ShareAction = "Init.Share";
+        const string PromotionsAction = "Init.Promotions";
+        const string ProfileAction = "Init.Profile";
+        const string HelpAction = "Init.Help";
+        
         async Task PrintMenu(MessageTrail trail)
         {
-            var text = "Добро пожаловать в добрососедский бот, пожалуйста, выберите действие:";
             var keyboard = new[]
             {
-                new []
-                {
-                    InlineKeyboardButton.WithCallbackData($"Профиль", ProfileAction),
-                    InlineKeyboardButton.WithCallbackData($"Отзывы", ReviewsAction),
-                    InlineKeyboardButton.WithCallbackData($"Купоны", CouponswAction)
-                },
-                new []
-                {
-                    InlineKeyboardButton.WithCallbackData($"Добавить отзыв", AddReviewAction)
-                }
+                new [] { InlineKeyboardButton.WithCallbackData($"📝 Поставить оценку", AddReviewAction) },
+                new [] { InlineKeyboardButton.WithCallbackData($"📢 Поделиться ботом", ShareAction) },
+                new [] { InlineKeyboardButton.WithCallbackData($"🎁 Посмотреть действующие акции", PromotionsAction) },
+                new [] { InlineKeyboardButton.WithCallbackData($"📈 Мой рейтинг и оценки", ProfileAction) },
+                new [] { InlineKeyboardButton.WithCallbackData($"❓ Что я умею", HelpAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await trail.SendTextMessageAsync(String.Empty, replyMarkup: markup);
         }
 
         public override async Task<ScenarioResult> Init(MessageTrail trail)
@@ -45,9 +40,11 @@ namespace NeighBot
         public override async Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
             args.CallbackQuery.Data switch
             {
+                AddReviewAction => await NewScenarioInit(trail, new AddReviewScenario()),
+                ShareAction => await NewScenarioInit(trail, new ShareScenario()),
+                PromotionsAction => await NewScenarioInit(trail, new PromotionsScenario()),
                 ProfileAction => await NewScenarioInit(trail, new ProfileScenario()),
-                ReviewsAction => await NewScenarioInit(trail, new ReviewsScenario()),
-                CouponswAction => await NewScenarioInit(trail, new CouponsScenario()),
+                HelpAction => await NewScenarioInit(trail, new HelpScenario()),
                 _ => ScenarioResult.ContinueCurrent
             };
     }
