@@ -29,26 +29,27 @@ namespace NeighBot
 
         async Task TryEditPrevMessage()
         {
-            if (_prevMessage == null || CallbackData == null)
+            if (_prevMessage == null || _prevMessage.ReplyMarkup == null)
                 return;
 
-            var callbackText = _prevMessage.ReplyMarkup?.InlineKeyboard?
-                .SelectMany(x => x)
-                .Where(x => x.CallbackData == CallbackData)
-                .Select(x => x.Text)
-                .FirstOrDefault();
+            var callbackText = (CallbackData == null)
+                ? null
+                :_prevMessage.ReplyMarkup?.InlineKeyboard?
+                    .SelectMany(x => x)
+                    .Where(x => x.CallbackData == CallbackData)
+                    .Select(x => x.Text)
+                    .FirstOrDefault();
 
             var prevText = _prevMessage.Text;
             if (callbackText != null)
-                prevText += $"\n\nБыла нажата кнопка: [{callbackText}]";
+                prevText += $"\n\n<i>Была нажата кнопка:</i> [{callbackText}]";
 
-            _prevMessage = await Bot.EditMessageTextAsync(Chat?.Id ?? User.Id, _prevMessage.MessageId, prevText);
+            _prevMessage = await Bot.EditMessageTextAsync(Chat?.Id ?? User.Id, _prevMessage.MessageId, prevText, ParseMode.Html);
             CallbackData = null;
         }
 
         public async Task<Message> SendTextMessageAsync(
             string text,
-            ParseMode parseMode = ParseMode.Default,
             bool disableWebPagePreview = false,
             bool disableNotification = false,
             int replyToMessageId = 0,
@@ -60,13 +61,14 @@ namespace NeighBot
             _prevMessage = await Bot.SendTextMessageAsync(
                 Chat?.Id ?? User.Id,
                 text,
-                parseMode,
+                ParseMode.Html,
                 disableWebPagePreview,
                 disableNotification,
                 replyToMessageId,
                 replyMarkup,
                 cancellationToken);
 
+            _prevMessage.Text = text;
             return _prevMessage;
         }
 

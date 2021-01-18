@@ -19,6 +19,7 @@ namespace NeighBot
         
         async Task PrintMenu(MessageTrail trail)
         {
+            var text = "Добро пожаловать в Бумеранг Бот, главное меню:";
             var keyboard = new[]
             {
                 new [] { InlineKeyboardButton.WithCallbackData($"📝 Поставить оценку", AddReviewAction) },
@@ -28,7 +29,7 @@ namespace NeighBot
                 new [] { InlineKeyboardButton.WithCallbackData($"❓ Что я умею", HelpAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(String.Empty, replyMarkup: markup);
+            await trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
         public override async Task<ScenarioResult> Init(MessageTrail trail)
