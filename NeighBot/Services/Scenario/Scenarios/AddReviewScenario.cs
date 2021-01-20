@@ -165,7 +165,11 @@ namespace NeighBot
         {
             _step = Step.Preview;
 
-            var text = $"Проверь свой отзыв:\n\nОтзыв для <b>{_name} ({_contact})</b>:\n<b>{_review}</b>\n\nC оценкой: <b>{_grade} / 5</b>";
+            var contactCaption = (string.IsNullOrEmpty(_contact.LastName))
+                ? _contact.FirstName
+                : $"{_contact.FirstName}_{_contact.LastName}";
+
+            var text = $"Проверь свой отзыв:\n\nОтзыв для <b>{_name} ({contactCaption})</b>:\n<b>{_review}</b>\n\nC оценкой: <b>{_grade} / 5</b>";
             var keyboard = new[]
             {
                 new [] { InlineKeyboardButton.WithCallbackData($"⏺️ Опубликовать", PublishAction) },

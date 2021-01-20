@@ -42,7 +42,7 @@ namespace NeighBot
 
             var prevText = _prevMessage.Text;
             if (callbackText != null)
-                prevText += $"\n\n<i>Была нажата кнопка:</i> [{callbackText}]";
+                prevText += $"\n\n<i>Была нажата кнопка:</i> [ {callbackText} ]";
 
             _prevMessage = await Bot.EditMessageTextAsync(Chat?.Id ?? User.Id, _prevMessage.MessageId, prevText, ParseMode.Html);
             CallbackData = null;
