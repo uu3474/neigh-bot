@@ -28,7 +28,7 @@ namespace NeighBot
                 .AppendLine($"2) Пригласите ещё 4 человек(а) для получения награды от 'ББ Кофе'!")
                 .ToString();
 
-            var keyboard = new[] { InlineKeyboardButton.WithCallbackData($"Назад", BackAction) };
+            var keyboard = new[] { InlineKeyboardButton.WithCallbackData($"🔙 Назад", BackAction) };
             var markup = new InlineKeyboardMarkup(keyboard);
             await trail.SendTextMessageAsync(text, replyMarkup: markup);
         }

@@ -23,7 +23,7 @@ namespace NeighBot
             var keyboard = new[]
             {
                 new [] { InlineKeyboardButton.WithCallbackData($"📝 Поставить оценку", AddReviewAction) },
-                new [] { InlineKeyboardButton.WithCallbackData($"📢 Поделиться ботом", ShareAction) },
+                new [] { InlineKeyboardButton.WithSwitchInlineQuery($"📢 Поделиться ботом", "Привет, поставь мне оценку 😀") },
                 new [] { InlineKeyboardButton.WithCallbackData($"🎁 Посмотреть действующие акции", PromotionsAction) },
                 new [] { InlineKeyboardButton.WithCallbackData($"📈 Мой рейтинг и оценки", ProfileAction) },
                 new [] { InlineKeyboardButton.WithCallbackData($"❓ Что я умею", HelpAction) }
@@ -42,7 +42,6 @@ namespace NeighBot
             args.CallbackQuery.Data switch
             {
                 AddReviewAction => await NewScenarioInit(trail, new AddReviewScenario()),
-                ShareAction => await NewScenarioInit(trail, new ShareScenario()),
                 PromotionsAction => await NewScenarioInit(trail, new PromotionsScenario()),
                 ProfileAction => await NewScenarioInit(trail, new ProfileScenario()),
                 HelpAction => await NewScenarioInit(trail, new HelpScenario()),

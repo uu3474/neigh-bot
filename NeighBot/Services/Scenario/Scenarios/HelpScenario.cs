@@ -15,10 +15,23 @@ namespace NeighBot
         async Task PrintMenu(MessageTrail trail)
         {
             var text = new StringBuilder()
-                .AppendLine("HELP DUMMY TEXT")
+                .AppendLine("Делай добрые дела и будь вежлив к окружающим. Взамен получай высокие оценки, меняй их на бесплатный кофе и другие приятные бонусы 🤗")
+                .AppendLine()
+                .AppendLine("Зачем писать комментарии и ставить оценки другим людям?")
+                .AppendLine("...")
+                .AppendLine("Комментарии и оценки анонимны?")
+                .AppendLine("...")
+                .AppendLine("Другие люди могут увидеть то, что обо мне тут пишут?")
+                .AppendLine("...")
+                .AppendLine("Как формируется рейтинг?")
+                .AppendLine("...")
+                .AppendLine("На что он влияет?")
+                .AppendLine("...")
+                .AppendLine("Что считается добрым делом?")
+                .AppendLine("...")
                 .ToString();
 
-            var keyboard = new[] { InlineKeyboardButton.WithCallbackData($"Назад", BackAction) };
+            var keyboard = new[] { InlineKeyboardButton.WithCallbackData($"🔙 Назад", BackAction) };
             var markup = new InlineKeyboardMarkup(keyboard);
             await trail.SendTextMessageAsync(text, replyMarkup: markup);
         }

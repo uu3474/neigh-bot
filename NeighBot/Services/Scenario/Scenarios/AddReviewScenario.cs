@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NeighBot
@@ -32,7 +33,7 @@ namespace NeighBot
         string _name;
         byte _grade;
         string _review;
-        string _contact;
+        Contact _contact;
 
         public AddReviewScenario()
         {
@@ -73,6 +74,9 @@ namespace NeighBot
 
             if (callbackArgs != null)
                 _name = callbackArgs.CallbackQuery.Message.Text;
+
+            if (string.IsNullOrEmpty(_name))
+                    throw new Exception($"Invalid name");
 
             return Task.CompletedTask;
         }
@@ -127,6 +131,9 @@ namespace NeighBot
             if (callbackArgs != null)
                 _review = callbackArgs.CallbackQuery.Message.Text;
 
+            if (_review.Length < 3)
+                throw new Exception($"Invalid review");
+
             return Task.CompletedTask;
         }
 
@@ -146,11 +153,10 @@ namespace NeighBot
 
         Task ParseContact(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
         {
-            if (messageArgs != null)
-                _contact = messageArgs.Message.Text;
+            if (messageArgs?.Message?.Contact == null)
+                throw new Exception("Empty contact");
 
-            if (callbackArgs != null)
-                _contact = callbackArgs.CallbackQuery.Message.Text;
+            _contact = messageArgs.Message.Contact;
 
             return Task.CompletedTask;
         }
