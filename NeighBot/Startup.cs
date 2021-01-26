@@ -15,18 +15,19 @@ namespace NeighBot
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
-
-        public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<WebProxySettings>(Configuration.GetSection("WebProxy"));
             services.Configure<BotSettings>(Configuration.GetSection("Bot"));
             services.AddMemoryCache();
+            services.AddSingleton<INeighRepository, NeighRepository>();
             services.AddSingleton<UserManager>();
             services.AddHostedService<BotService>();
             services.AddControllers();

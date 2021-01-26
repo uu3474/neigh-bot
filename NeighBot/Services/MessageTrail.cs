@@ -15,12 +15,12 @@ namespace NeighBot
         Message _prevMessage;
 
         public TelegramBotClient Bot { get; }
-        public User User { get; }
+        public Telegram.Bot.Types.User User { get; }
         public Chat Chat { get; }
 
         public string CallbackData { get; set; }
 
-        public MessageTrail(TelegramBotClient bot, User user, Chat chat = null)
+        public MessageTrail(TelegramBotClient bot, Telegram.Bot.Types.User user, Chat chat = null)
         {
             Bot = bot;
             User = user;

@@ -51,7 +51,7 @@ namespace NeighBot
             await OnAction(args.CallbackQuery.From, args.CallbackQuery.Message.Chat, args.CallbackQuery.Data,
                 (context) => context.CurrentScenario.OnCallbackQuery(context.Trail, args));
 
-        async Task OnAction(User user, Chat chat, string callbackData, ActionHandler handler)
+        async Task OnAction(Telegram.Bot.Types.User user, Chat chat, string callbackData, ActionHandler handler)
         {
             var context = _userManager.GetContext(_botClient, user, chat);
             await context.Lock.WaitAsync();

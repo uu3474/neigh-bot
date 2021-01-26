@@ -1,6 +1,6 @@
 create table users (
 	id bigint primary key,
-	create_time timestamptz not null default(current_time()),
+	create_time timestamptz not null default now(),
 	first_name text,
 	last_name text,
 	user_name text,
@@ -11,9 +11,9 @@ create index users_phone_idx ON users (phone);
 
 create table reviews (
 	id bigserial primary key,
-	create_time timestamptz not null default(current_time()),
-	from_user references users (id),
-	to_user references users (id),
+	create_time timestamptz not null default now(),
+	from_user bigint references users (id),
+	to_user bigint references users (id),
 	grade smallint not null,
 	review text not null
 );

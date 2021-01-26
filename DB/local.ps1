@@ -1,0 +1,1 @@
+evolve migrate postgresql -c "Server=localhost;Database=neigh;User Id=neigh;Password=neigh;" -l "migrations" -s public

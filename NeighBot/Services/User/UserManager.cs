@@ -17,12 +17,12 @@ namespace NeighBot
         public UserManager(IMemoryCache cahce) =>
             _cahce = cahce;
 
-        string GetKey(User user) =>
+        string GetKey(Telegram.Bot.Types.User user) =>
             string.IsNullOrEmpty(user.Username)
                 ? user.Id.ToString()
                 : $"{user.Username}[{user.Id}]";
 
-        public UserContext GetContext(TelegramBotClient bot, User user, Chat chat = null) =>
+        public UserContext GetContext(TelegramBotClient bot, Telegram.Bot.Types.User user, Chat chat = null) =>
             _cahce.GetOrCreate(GetKey(user), (entry) =>
             {
                 entry.SetSlidingExpiration(_expiration);
