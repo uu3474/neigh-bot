@@ -10,18 +10,27 @@ namespace NeighBot
 {
     public abstract class BaseScenario : IScenario
     {
-        public virtual Task<ScenarioResult> Init(MessageTrail trail) =>
+        protected UserManager Users { get; set; }
+        protected INeighRepository Repository { get; set; }
+        protected MessageTrail Trail { get; set; }
+
+        public virtual Task<ScenarioResult> Init(UserManager userManager, INeighRepository repository, MessageTrail trail)
+        {
+            Users = userManager;
+            Repository = repository;
+            Trail = trail;
+            return Task.FromResult(ScenarioResult.ContinueCurrent);
+        }
+
+        public virtual Task<ScenarioResult> OnMessage(MessageEventArgs args) =>
             Task.FromResult(ScenarioResult.ContinueCurrent);
 
-        public virtual Task<ScenarioResult> OnMessage(MessageTrail trail, MessageEventArgs args) =>
-            Task.FromResult(ScenarioResult.ContinueCurrent);
-
-        public virtual Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
+        public virtual Task<ScenarioResult> OnCallbackQuery(CallbackQueryEventArgs args) =>
             Task.FromResult(ScenarioResult.ContinueCurrent);    
 
-        protected virtual async Task<ScenarioResult> NewScenarioInit(MessageTrail trail, IScenario scenario)
+        protected virtual async Task<ScenarioResult> NewScenarioInit(IScenario scenario)
         {
-            await scenario.Init(trail);
+            await scenario.Init(Users, Repository, Trail);
             return ScenarioResult.NewScenario(scenario);
         }
     }

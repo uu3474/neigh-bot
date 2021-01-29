@@ -15,16 +15,14 @@ namespace NeighBot
         Message _prevMessage;
 
         public TelegramBotClient Bot { get; }
-        public Telegram.Bot.Types.User User { get; }
-        public Chat Chat { get; }
+        public int UserID { get; }
 
         public string CallbackData { get; set; }
 
-        public MessageTrail(TelegramBotClient bot, Telegram.Bot.Types.User user, Chat chat = null)
+        public MessageTrail(TelegramBotClient bot, int userID)
         {
             Bot = bot;
-            User = user;
-            Chat = chat;
+            UserID = userID;
         }
 
         async Task TryEditPrevMessage()
@@ -44,7 +42,7 @@ namespace NeighBot
             if (callbackText != null)
                 prevText += $"\n\n<i>Была нажата кнопка:</i> [ {callbackText} ]";
 
-            _prevMessage = await Bot.EditMessageTextAsync(Chat?.Id ?? User.Id, _prevMessage.MessageId, prevText, ParseMode.Html);
+            _prevMessage = await Bot.EditMessageTextAsync(UserID, _prevMessage.MessageId, prevText, ParseMode.Html);
             CallbackData = null;
         }
 
@@ -59,7 +57,7 @@ namespace NeighBot
             await TryEditPrevMessage();
 
             _prevMessage = await Bot.SendTextMessageAsync(
-                Chat?.Id ?? User.Id,
+                UserID,
                 text,
                 ParseMode.Html,
                 disableWebPagePreview,
@@ -72,5 +70,20 @@ namespace NeighBot
             return _prevMessage;
         }
 
+        public async Task<Message> SendTextMessageOutTrailAsync(
+            string text,
+            bool disableWebPagePreview = false,
+            bool disableNotification = false,
+            int replyToMessageId = 0,
+            CancellationToken cancellationToken = default)
+            => await Bot.SendTextMessageAsync(
+                UserID,
+                text,
+                ParseMode.Html,
+                disableWebPagePreview,
+                disableNotification,
+                replyToMessageId,
+                null,
+                cancellationToken);
     }
 }

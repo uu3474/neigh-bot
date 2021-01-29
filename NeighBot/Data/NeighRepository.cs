@@ -25,50 +25,56 @@ namespace NeighBot
             return connection;
         }
 
-        async Task<long> AddOrUpdateUserCore(NpgsqlConnection conection, User toUser)
+        async Task<long> AddOrUpdateUserCore(NpgsqlConnection conection, User user)
             => await conection.QuerySingleAsync<long>(
 @"insert into users(id, first_name, last_name, user_name)
 values (@Id, @FirstName, @LastName, @Username)
-on conflict do
+on conflict (id) do
 update set first_name = @FirstName, last_name = @LastName, user_name = @Username
 returning id"
-                , toUser);
+                , user);
 
-        public async Task<long> AddOrUpdateUser(User toUser)
+        public async Task<long> AddOrUpdateUser(User user)
         {
             using var connection = await CreateAndOpenConnection();
-            return await AddOrUpdateUserCore(connection, toUser);
+            return await AddOrUpdateUserCore(connection, user);
         }
 
-        async Task<long> AddOrUpdateUserCore(NpgsqlConnection conection, Contact toContact)
+        async Task<long> AddOrUpdateUserCore(NpgsqlConnection conection, Contact contact)
             => await conection.QuerySingleAsync<long>(
 @"insert into users(id, first_name, last_name, phone)
 values (@UserId, @FirstName, @LastName, @PhoneNumber)
-on conflict do
+on conflict (id) do
 update set first_name = @FirstName, last_name = @LastName, phone = @PhoneNumber
 returning id"
-                , toContact);
+                , contact);
 
-        public async Task<long> AddOrUpdateUser(Contact toContact)
+        public async Task<long> AddOrUpdateUser(Contact contact)
         {
             using var connection = await CreateAndOpenConnection();
-            return await AddOrUpdateUserCore(connection, toContact);
+            return await AddOrUpdateUserCore(connection, contact);
         }
 
-        async Task<long> AddReviewCore(NpgsqlConnection conection, DBReview review)
-            => await conection.QuerySingleAsync<long>(
+        async Task<DBReview> AddReviewCore(NpgsqlConnection conection, DBReview review)
+            => await conection.QuerySingleAsync<DBReview>(
 @"insert into reviews(from_user, to_user, grade, review)
 values (@FromUser, @ToUser, @Grade, @Review)
-returning id",
+returning
+    id as ID,
+    create_time as CreateTime,
+    from_user as FromUser,
+    to_user as ToUser,
+    grade as Grade,
+    review as Review",
                 review);
 
-        public async Task<long> AddReview(DBReview review)
+        public async Task<DBReview> AddReview(DBReview review)
         {
             using var connection = await CreateAndOpenConnection();
             return await AddReviewCore(connection, review);
         }
 
-        public async Task<long> AddReview(User fromUser, Contact toContact, DBReview review)
+        public async Task<DBReview> AddReview(User fromUser, Contact toContact, DBReview review)
         {
             using var connection = await CreateAndOpenConnection();
             
@@ -78,15 +84,37 @@ returning id",
             var toID = await AddOrUpdateUserCore(connection, toContact);
             review.ToUser = toID;
 
-            var reviewID = await AddReviewCore(connection, review);
-            review.ID = reviewID;
-            
-            return reviewID;
+            return await AddReviewCore(connection, review);
         }
 
-        public Task<IEnumerable<DBReview>> GetReviews(int toUserID)
+        public async Task<IEnumerable<DBReview>> GetReviews(long toUserID, int limit = 10)
         {
-            throw new NotImplementedException();
+            using var connection = await CreateAndOpenConnection();
+            return await connection.QueryAsync<DBReview>(
+@"select 
+    id as ID,
+    create_time as CreateTime,
+    from_user as FromUser,
+    to_user as ToUser,
+    grade as Grade,
+    review as Review
+from reviews
+where to_user = @ToUserID
+order by create_time desc
+limit @Limit"
+                , new { ToUserID = toUserID, Limit = limit });
+        }
+
+        public async Task<float> GetAverageGrade(long toUserID, int limit = 10)
+        {
+            using var connection = await CreateAndOpenConnection();
+            return await connection.QuerySingleAsync<float>(
+@"select avg(grade)
+from reviews
+where to_user = @ToUserID
+order by create_time desc
+limit @Limit"
+                , new { ToUserID = toUserID, Limit = limit });
         }
     }
 }

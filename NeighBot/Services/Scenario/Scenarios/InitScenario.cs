@@ -17,7 +17,7 @@ namespace NeighBot
         const string ProfileAction = "Init.Profile";
         const string HelpAction = "Init.Help";
         
-        async Task PrintMenu(MessageTrail trail)
+        async Task PrintMenu()
         {
             var text = "Добро пожаловать в Бумеранг Бот, главное меню:";
             var keyboard = new[]
@@ -29,22 +29,23 @@ namespace NeighBot
                 new [] { InlineKeyboardButton.WithCallbackData($"❓ Что я умею", HelpAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await Trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
-        public override async Task<ScenarioResult> Init(MessageTrail trail)
+        public override async Task<ScenarioResult> Init(UserManager userManager, INeighRepository repository, MessageTrail trail)
         {
-            await PrintMenu(trail);
+            await base.Init(userManager, repository, trail);
+            await PrintMenu();
             return ScenarioResult.ContinueCurrent;
         }
 
-        public override async Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
+        public override async Task<ScenarioResult> OnCallbackQuery(CallbackQueryEventArgs args) =>
             args.CallbackQuery.Data switch
             {
-                AddReviewAction => await NewScenarioInit(trail, new AddReviewScenario()),
-                PromotionsAction => await NewScenarioInit(trail, new PromotionsScenario()),
-                ProfileAction => await NewScenarioInit(trail, new ProfileScenario()),
-                HelpAction => await NewScenarioInit(trail, new HelpScenario()),
+                AddReviewAction => await NewScenarioInit(new AddReviewScenario()),
+                PromotionsAction => await NewScenarioInit(new PromotionsScenario()),
+                ProfileAction => await NewScenarioInit(new ProfileScenario()),
+                HelpAction => await NewScenarioInit(new HelpScenario()),
                 _ => ScenarioResult.ContinueCurrent
             };
     }

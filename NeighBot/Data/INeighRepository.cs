@@ -6,12 +6,13 @@ using Telegram.Bot.Types;
 
 namespace NeighBot
 {
-    interface INeighRepository
+    public interface INeighRepository
     {
-        Task<long> AddOrUpdateUser(User toUser);
-        Task<long> AddOrUpdateUser(Contact toContact);
-        Task<long> AddReview(DBReview review);
-        Task<long> AddReview(User fromUser, Contact toUser, DBReview review);
-        Task<IEnumerable<DBReview>> GetReviews(int toUserID);
+        Task<long> AddOrUpdateUser(User user);
+        Task<long> AddOrUpdateUser(Contact contact);
+        Task<DBReview> AddReview(DBReview review);
+        Task<DBReview> AddReview(User fromUser, Contact toUser, DBReview review);
+        Task<IEnumerable<DBReview>> GetReviews(long toUserID, int limit = 10);
+        Task<float> GetAverageGrade(long toUserID, int limit = 10);
     }
 }

@@ -14,7 +14,7 @@ namespace NeighBot
     {
         const string BackAction = "Coupons.Back";
 
-        async Task PrintMenu(MessageTrail trail)
+        async Task PrintMenu()
         {
             var text = new StringBuilder()
                 .AppendLine("Вам доступны следующие награды:")
@@ -30,19 +30,20 @@ namespace NeighBot
 
             var keyboard = new[] { InlineKeyboardButton.WithCallbackData($"🔙 Назад", BackAction) };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await Trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
-        public override async Task<ScenarioResult> Init(MessageTrail trail)
+        public override async Task<ScenarioResult> Init(UserManager userManager, INeighRepository repository, MessageTrail trail)
         {
-            await PrintMenu(trail);
+            await base.Init(userManager, repository, trail);
+            await PrintMenu();
             return ScenarioResult.ContinueCurrent;
         }
 
-        public override async Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
+        public override async Task<ScenarioResult> OnCallbackQuery(CallbackQueryEventArgs args) =>
             args.CallbackQuery.Data switch
             {
-                BackAction => await NewScenarioInit(trail, new InitScenario()),
+                BackAction => await NewScenarioInit(new InitScenario()),
                 _ => ScenarioResult.ContinueCurrent
             };
     }

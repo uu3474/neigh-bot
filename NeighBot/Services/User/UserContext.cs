@@ -10,17 +10,16 @@ namespace NeighBot
 {
     public class UserContext
     {
-        public User User { get; }
         public SemaphoreSlim Lock { get; }
         public MessageTrail Trail { get; }
         public IScenario CurrentScenario { get; set; }
 
-        public UserContext(TelegramBotClient bot, User user, Chat chat = null, IScenario scenario = null)
+        public int UserID => Trail.UserID;
+
+        public UserContext(TelegramBotClient bot, int userID)
         {
-            User = user;
             Lock = new SemaphoreSlim(1, 1);
-            Trail = new MessageTrail(bot, user, chat);
-            CurrentScenario = scenario;
+            Trail = new MessageTrail(bot, userID);
         }
     }
 }

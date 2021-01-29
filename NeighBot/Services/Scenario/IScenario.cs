@@ -7,8 +7,8 @@ namespace NeighBot
 {
     public interface IScenario
     {
-        Task<ScenarioResult> Init(MessageTrail trail);
-        Task<ScenarioResult> OnMessage(MessageTrail trail, MessageEventArgs args);
-        Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args);
+        Task<ScenarioResult> Init(UserManager userManager, INeighRepository repository, MessageTrail trail);
+        Task<ScenarioResult> OnMessage(MessageEventArgs args);
+        Task<ScenarioResult> OnCallbackQuery(CallbackQueryEventArgs args);
     }
 }

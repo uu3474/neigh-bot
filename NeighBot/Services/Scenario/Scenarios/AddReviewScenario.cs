@@ -27,17 +27,18 @@ namespace NeighBot
         const string BackAction = "AddReview.Back";
         const string CancelAction = "AddReview.Cancel";
 
-        readonly Dictionary<Step, Func<MessageTrail, Task>> _invationByStep;
+        readonly Dictionary<Step, Func<Task>> _invationByStep;
         readonly Dictionary<Step, Func<MessageEventArgs, CallbackQueryEventArgs, Task>> _actionByStep;
         Step _step;
         string _name;
         byte _grade;
         string _review;
-        Contact _contact;
+        Contact _toContact;
+        User _fromUser;
 
         public AddReviewScenario()
         {
-            _invationByStep = new Dictionary<Step, Func<MessageTrail, Task>>
+            _invationByStep = new Dictionary<Step, Func<Task>>
             {
                 { Step.EnterName, InviteEnterName },
                 { Step.EnterGrade, InviteEnterGrade },
@@ -50,11 +51,18 @@ namespace NeighBot
                 { Step.EnterName, ParseName },
                 { Step.EnterGrade, ParseGrade },
                 { Step.EnterReview, ParseReview },
-                { Step.ProvideContact, ParseContact },
+                { Step.ProvideContact, ParseToContact },
             };
         }
 
-        async Task InviteEnterName(MessageTrail trail)
+        public override async Task<ScenarioResult> Init(UserManager userManager, INeighRepository repository, MessageTrail trail)
+        {
+            await base.Init(userManager, repository, trail);
+            await InviteEnterName();
+            return ScenarioResult.ContinueCurrent;
+        }
+
+        async Task InviteEnterName()
         {
             _step = Step.EnterName;
 
@@ -64,7 +72,7 @@ namespace NeighBot
                 new [] { InlineKeyboardButton.WithCallbackData($"🔝 Отмена", CancelAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await Trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
         Task ParseName(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
@@ -81,7 +89,7 @@ namespace NeighBot
             return Task.CompletedTask;
         }
 
-        async Task InviteEnterGrade(MessageTrail trail)
+        async Task InviteEnterGrade()
         {
             _step = Step.EnterGrade;
 
@@ -92,7 +100,13 @@ namespace NeighBot
                 new [] { InlineKeyboardButton.WithCallbackData($"🔝 Отмена", CancelAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await Trail.SendTextMessageAsync(text, replyMarkup: markup);
+        }
+
+        void ValidateGrade()
+        {
+            if (_grade < _minGrage || _grade > _maxGrade)
+                throw new Exception($"Invalid grade '{_grade}', valid range [{_minGrage}, {_maxGrade}]");
         }
 
         Task ParseGrade(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
@@ -103,13 +117,12 @@ namespace NeighBot
             if (callbackArgs != null)
                 _grade = byte.Parse(callbackArgs.CallbackQuery.Message.Text);
 
-            if (_grade < _minGrage || _grade > _maxGrade)
-                throw new Exception($"Invalid grade '{_grade}', valid range [{_minGrage}, {_maxGrade}]");
+            ValidateGrade();
 
             return Task.CompletedTask;
         }
 
-        async Task InviteEnterReview(MessageTrail trail)
+        async Task InviteEnterReview()
         {
             _step = Step.EnterReview;
 
@@ -120,7 +133,13 @@ namespace NeighBot
                 new [] { InlineKeyboardButton.WithCallbackData($"🔝 Отмена", CancelAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await Trail.SendTextMessageAsync(text, replyMarkup: markup);
+        }
+
+        void ValidateReview()
+        {
+            if (_review.Length < 3)
+                throw new Exception($"Invalid review");
         }
 
         Task ParseReview(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
@@ -131,13 +150,12 @@ namespace NeighBot
             if (callbackArgs != null)
                 _review = callbackArgs.CallbackQuery.Message.Text;
 
-            if (_review.Length < 3)
-                throw new Exception($"Invalid review");
+            ValidateReview();
 
             return Task.CompletedTask;
         }
 
-        async Task InviteProvideContact(MessageTrail trail)
+        async Task InviteProvideContact()
         {
             _step = Step.ProvideContact;
 
@@ -148,26 +166,34 @@ namespace NeighBot
                 new [] { InlineKeyboardButton.WithCallbackData($"🔝 Отмена", CancelAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await Trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
-        Task ParseContact(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
+        void ValidateToContact()
         {
-            if (messageArgs?.Message?.Contact == null)
-                throw new Exception("Empty contact");
+            if (_toContact == null)
+                throw new Exception("Empty contact (to)");
 
-            _contact = messageArgs.Message.Contact;
+            if (_toContact.UserId == 0)
+                throw new Exception("Contact (to) do not contain user id");
+        }
+
+        Task ParseToContact(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
+        {
+            _toContact = messageArgs?.Message?.Contact;
+
+            ValidateToContact();
 
             return Task.CompletedTask;
         }
 
-        async Task Preview(MessageTrail trail)
+        async Task Preview()
         {
             _step = Step.Preview;
 
-            var contactCaption = (string.IsNullOrEmpty(_contact.LastName))
-                ? _contact.FirstName
-                : $"{_contact.FirstName}_{_contact.LastName}";
+            var contactCaption = (string.IsNullOrEmpty(_toContact.LastName))
+                ? _toContact.FirstName
+                : $"{_toContact.FirstName}_{_toContact.LastName}";
 
             var text = $"Проверь свой отзыв:\n\nОтзыв для <b>{_name} ({contactCaption})</b>:\n<b>{_review}</b>\n\nC оценкой: <b>{_grade} / 5</b>";
             var keyboard = new[]
@@ -177,20 +203,60 @@ namespace NeighBot
                 new [] { InlineKeyboardButton.WithCallbackData($"🔝 Отмена", CancelAction) }
             };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await Trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
-        async Task<ScenarioResult> Publish(MessageTrail trail)
+        void SetFromUser(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
         {
-            var text = $"Великолепно! Отзыв отправлен.";
-            await trail.SendTextMessageAsync(text);
-            return await NewScenarioInit(trail, new InitScenario());
+            if (messageArgs != null)
+                _fromUser = messageArgs.Message.From;
+
+            if (callbackArgs != null)
+                _fromUser = callbackArgs.CallbackQuery.From;
+
+            ValidateFromUser();
         }
 
-        async Task<ScenarioResult> Forward(MessageTrail trail, MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
+        void ValidateFromUser()
+        {
+            if (_fromUser == null)
+                throw new Exception("Empty user (from)");
+        }
+
+        void EnsureReview()
+        {
+            ValidateGrade();
+            ValidateReview();
+            ValidateToContact();
+            ValidateFromUser();
+        }
+
+        async Task SentNotificationToContact(DBReview review)
+        {
+            var (_, contactContext) = Users.GetContext(Trail.Bot, _toContact.UserId);
+
+            var text = $"<i>Полуен отзыв:</i>\n{review.Review}\n<i>C оценкой:</i> <b>{review.Grade} / 5</b>";
+            await contactContext.Trail.SendTextMessageOutTrailAsync(text);
+        }
+
+        async Task<ScenarioResult> Publish(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
+        {
+            SetFromUser(messageArgs, callbackArgs);
+
+            EnsureReview();
+
+            var dbReview = await Repository.AddReview(_fromUser, _toContact, new DBReview(_grade, _review));
+            await SentNotificationToContact(dbReview);
+
+            var text = $"Великолепно! Отзыв отправлен.";
+            await Trail.SendTextMessageAsync(text);
+            return await NewScenarioInit(new InitScenario());
+        }
+
+        async Task<ScenarioResult> Forward(MessageEventArgs messageArgs, CallbackQueryEventArgs callbackArgs)
         {
             if (_step == Step.Preview)
-                return await Publish(trail);
+                return await Publish(messageArgs, callbackArgs);
 
             try
             {
@@ -202,35 +268,29 @@ namespace NeighBot
                 // log mb?
             }
 
-            await _invationByStep[_step].Invoke(trail);
+            await _invationByStep[_step].Invoke();
             return ScenarioResult.ContinueCurrent;
         }
 
-        async Task<ScenarioResult> Back(MessageTrail trail)
+        async Task<ScenarioResult> Back()
         {
             if (_step == Step.EnterName)
-                return await NewScenarioInit(trail, new InitScenario());
+                return await NewScenarioInit(new InitScenario());
 
             _step = (Step)((int)_step - 1);
-            await _invationByStep[_step].Invoke(trail);
+            await _invationByStep[_step].Invoke();
             return ScenarioResult.ContinueCurrent;
         }
 
-        public override async Task<ScenarioResult> Init(MessageTrail trail)
-        {
-            await InviteEnterName(trail);
-            return ScenarioResult.ContinueCurrent;
-        }
+        public override async Task<ScenarioResult> OnMessage(MessageEventArgs args) =>
+            await Forward(args, null);
 
-        public override async Task<ScenarioResult> OnMessage(MessageTrail trail, MessageEventArgs args) =>
-            await Forward(trail, args, null);
-
-        public override async Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
+        public override async Task<ScenarioResult> OnCallbackQuery(CallbackQueryEventArgs args) =>
             args.CallbackQuery.Data switch
             {
-                PublishAction => await Publish(trail),
-                BackAction => await Back(trail),
-                CancelAction => await NewScenarioInit(trail, new InitScenario()),
+                PublishAction => await Publish(null, args),
+                BackAction => await Back(),
+                CancelAction => await NewScenarioInit(new InitScenario()),
                 _ => ScenarioResult.ContinueCurrent
             };
 

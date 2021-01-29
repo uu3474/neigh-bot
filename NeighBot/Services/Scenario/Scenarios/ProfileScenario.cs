@@ -14,27 +14,45 @@ namespace NeighBot
     {
         const string BackAction = "Profile.Back";
 
-        async Task PrintMenu(MessageTrail trail)
+        async Task PrintMenu()
         {
-            var text = new StringBuilder()
-                .AppendLine("Профиль TODO")
-                .ToString();
+            var reviews = (await Repository.GetReviews(Trail.UserID)).ToList();
+
+            string text = null;
+            if (reviews.Count == 0)
+            {
+                text = "К сожалению, вы ещё не получали отзывы, поделитесь ботом с соседями и пусть они вас оценят!";
+            }
+            else
+            {
+                var builder = new StringBuilder();
+
+                foreach (var review in reviews)
+                    builder
+                        .AppendLine($"<i>Отзыв от {review.CreateTime}:</i>\n{review.Review}\n<i>C оценкой:</i> <b>{review.Grade} / 5</b>")
+                        .AppendLine();
+
+                builder.AppendLine($"<b>Ваш рейтинг: {Math.Round(reviews.Average(x => x.Grade), 2)} / 5</b>");
+
+                text = builder.ToString();
+            }
 
             var keyboard = new[] { InlineKeyboardButton.WithCallbackData($"🔙 Назад", BackAction) };
             var markup = new InlineKeyboardMarkup(keyboard);
-            await trail.SendTextMessageAsync(text, replyMarkup: markup);
+            await Trail.SendTextMessageAsync(text, replyMarkup: markup);
         }
 
-        public override async Task<ScenarioResult> Init(MessageTrail trail)
+        public override async Task<ScenarioResult> Init(UserManager userManager, INeighRepository repository, MessageTrail trail)
         {
-            await PrintMenu(trail);
+            await base.Init(userManager, repository, trail);
+            await PrintMenu();
             return ScenarioResult.ContinueCurrent;
         }
 
-        public override async Task<ScenarioResult> OnCallbackQuery(MessageTrail trail, CallbackQueryEventArgs args) =>
+        public override async Task<ScenarioResult> OnCallbackQuery(CallbackQueryEventArgs args) =>
             args.CallbackQuery.Data switch
             {
-                BackAction => await NewScenarioInit(trail, new InitScenario()),
+                BackAction => await NewScenarioInit(new InitScenario()),
                 _ => ScenarioResult.ContinueCurrent
             };
     }
