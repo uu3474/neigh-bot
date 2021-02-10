@@ -13,6 +13,7 @@ namespace NeighBot
     {
         public static void Main(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .UseSystemd()
                 .ConfigureWebHostDefaults(builder =>
                     builder.UseStartup<Startup>())
                 .Build()

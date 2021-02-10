@@ -246,7 +246,14 @@ namespace NeighBot
             EnsureReview();
 
             var dbReview = await Repository.AddReview(_fromUser, _toContact, new DBReview(_grade, _review));
-            await SentNotificationToContact(dbReview);
+            try
+            {
+                await SentNotificationToContact(dbReview);
+            }
+            catch
+            {
+
+            }
 
             var text = $"Великолепно! Отзыв отправлен.";
             await Trail.SendTextMessageAsync(text);
