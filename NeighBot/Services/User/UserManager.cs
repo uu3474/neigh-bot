@@ -24,6 +24,8 @@ namespace NeighBot
             {
                 isNew = true;
                 entry.SetSlidingExpiration(_expiration);
+                entry.RegisterPostEvictionCallback(async (object key, object value, EvictionReason reason, object state) =>
+                    await ((UserContext)value).Trail.ClearLastKeyboard()); // TODO: async call without checking result
                 return new UserContext(bot, userID);
             });
             return (isNew, context);

@@ -8,7 +8,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NeighBot
 {
-    public class AddReviewScenario : BaseScenario
+    public class ReviewScenario : BaseScenario
     {
         enum Step : int
         {
@@ -23,9 +23,9 @@ namespace NeighBot
         const byte _minGrage = 1;
         const byte _maxGrade = 5;
 
-        const string PublishAction = "AddReview.Publish";
-        const string BackAction = "AddReview.Back";
-        const string CancelAction = "AddReview.Cancel";
+        const string PublishAction = "Review.Publish";
+        const string BackAction = "Review.Back";
+        const string CancelAction = "Review.Cancel";
 
         readonly Dictionary<Step, Func<Task>> _invationByStep;
         readonly Dictionary<Step, Func<MessageEventArgs, CallbackQueryEventArgs, Task>> _actionByStep;
@@ -36,7 +36,7 @@ namespace NeighBot
         Contact _toContact;
         User _fromUser;
 
-        public AddReviewScenario()
+        public ReviewScenario()
         {
             _invationByStep = new Dictionary<Step, Func<Task>>
             {

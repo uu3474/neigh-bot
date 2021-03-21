@@ -116,5 +116,32 @@ order by create_time desc
 limit @Limit"
                 , new { ToUserID = toUserID, Limit = limit });
         }
+
+        public async Task<DBFeedback> AddFeedback(DBFeedback feedback)
+        {
+            using var connection = await CreateAndOpenConnection();
+            return await AddFeedbackCore(connection, feedback);
+        }
+
+        public async Task<DBFeedback> AddFeedback(User user, DBFeedback feedback)
+        {
+            using var connection = await CreateAndOpenConnection();
+
+            var userID = await AddOrUpdateUserCore(connection, user);
+            feedback.User = userID;
+
+            return await AddFeedbackCore(connection, feedback);
+        }
+
+        async Task<DBFeedback> AddFeedbackCore(NpgsqlConnection conection, DBFeedback feedback)
+            => await conection.QuerySingleAsync<DBFeedback>(
+@"insert into reviews(user, feedback)
+values (@User, @Feedback)
+returning
+    id as ID,
+    create_time as CreateTime,
+    user as User,
+    feedback as Feedback",
+                feedback);
     }
 }

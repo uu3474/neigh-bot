@@ -25,7 +25,7 @@ namespace NeighBot
             UserID = userID;
         }
 
-        async Task TryEditPrevMessage()
+        public async Task ClearLastKeyboard()
         {
             if (_prevMessage == null || _prevMessage.ReplyMarkup == null)
                 return;
@@ -38,11 +38,7 @@ namespace NeighBot
                     .Select(x => x.Text)
                     .FirstOrDefault();
 
-            var prevText = _prevMessage.Text;
-            if (callbackText != null)
-                prevText += $"\n\n<i>Была нажата кнопка:</i> [ {callbackText} ]";
-
-            _prevMessage = await Bot.EditMessageTextAsync(UserID, _prevMessage.MessageId, prevText, ParseMode.Html);
+            _prevMessage = await Bot.EditMessageTextAsync(UserID, _prevMessage.MessageId, _prevMessage.Text, ParseMode.Html);
             CallbackData = null;
         }
 
@@ -54,7 +50,7 @@ namespace NeighBot
             IReplyMarkup replyMarkup = null,
             CancellationToken cancellationToken = default)
         {
-            await TryEditPrevMessage();
+            await ClearLastKeyboard();
 
             _prevMessage = await Bot.SendTextMessageAsync(
                 UserID,
